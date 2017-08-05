@@ -1,0 +1,120 @@
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+
+<body>
+    <script>
+        let buttonChanged = false;
+
+        function sendButtonState(button, state) {
+            console.log(button + ": " + state);
+            buttonChanged = true;
+            let request = new XMLHttpRequest();
+            request.open("POST", "/output");
+            request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.send("output=" + encodeURI(button) + "&state=" + state);
+        }
+
+        let initial_states_request = new XMLHttpRequest();
+        initial_states_request.onreadystatechange = function () {
+            if (this.readyState !== XMLHttpRequest.DONE)
+                return;
+            if (this.status === 200) {
+                displayAllButtons(this);
+            } else {
+                offline();
+            }
+        };
+        initial_states_request.open("GET", "/output");
+        initial_states_request.send();
+
+        function displayAllButtons(xhr) {
+            JSON.parse(xhr.response).forEach(displayButton);
+            setTimeout(updateStates, 500);
+            buttonChanged = false;
+        }
+
+        function displayButton(state, button) {
+            let buttondiv = document.createElement("div");
+            // buttondiv.className = "slider-switch";
+            buttondiv.innerHTML =
+                `<h2>Output ${button + 1}</h2>\
+                <label class="switch">
+                    <input id="${button}" type="checkbox" onchange="sendButtonState(this.id,this.checked?'1':'0');">
+                    <div class="slider round"></div>
+                </label>`;
+            let checkbox = buttondiv.getElementsByTagName("input")[0];
+            checkbox.checked = state === '1';
+            document.getElementById("buttonContainer").appendChild(buttondiv);
+        }
+
+        function updateStates() {
+            let states_req = new XMLHttpRequest();
+            states_req.onreadystatechange = function () {
+                if (this.readyState !== XMLHttpRequest.DONE)
+                    return;
+                if (this.status === 200) {
+                    updateAllButtons(this);
+                    if (is_offline) {
+                        online();
+                    }
+                } else {
+                    offline();
+                }
+            };
+            states_req.open("GET", "/output");
+            states_req.send();
+        }
+
+        function updateAllButtons(xhr) {
+            if (buttonChanged) {
+                updateStates();
+            } else {
+                JSON.parse(xhr.response).forEach(updateButton);
+                setTimeout(updateStates, 500);
+            }
+            buttonChanged = false;
+        }
+
+        function updateButton(state, button) {
+            let checkbox = document.getElementById(button.toString());
+            checkbox.checked = state;
+        }
+        
+        let is_offline = false;
+
+        function offline() {
+            if (is_offline)
+                return;
+            is_offline = true;
+            let offlineDiv = document.createElement("div");
+            offlineDiv.id = "offlineDiv";
+            offlineDiv.appendChild(document.createTextNode("Offline"));
+
+            let retryButton = document.createElement("button");
+            retryButton.appendChild(document.createTextNode("Retry"));
+            retryButton.onclick = updateStates;
+
+            offlineDiv.appendChild(retryButton);
+
+            document.body.appendChild(offlineDiv);
+
+            let buttonContainer = document.getElementById("buttonContainer");
+            buttonContainer.style.filter = "blur(3px)";
+            buttonContainer.style.pointerEvents = "none";
+        }
+
+        function online() {
+            is_offline = false;
+            document.body.removeChild(document.getElementById("offlineDiv"));
+            let buttonContainer = document.getElementById("buttonContainer");
+            buttonContainer.style.filter = "none";
+            buttonContainer.style.pointerEvents = "auto";
+        }
+    </script>
+    <div id="buttonContainer"></div>
+</body>
+
+</html>
