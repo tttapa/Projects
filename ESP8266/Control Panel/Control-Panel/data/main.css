@@ -6,6 +6,12 @@ body {
 div#buttonContainer {
   padding: 8px;
   transition: filter 1s;
+  max-height: 100vh;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  flex-direction: column;
+  align-items: center;
 }
 
 div#offlineDiv {
@@ -27,7 +33,7 @@ div#offlineDiv>button {
 
 .switch {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 60px;
   height: 34px;
   margin: auto 12px;
