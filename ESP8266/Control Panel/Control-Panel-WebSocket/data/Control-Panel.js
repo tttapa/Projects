@@ -1,114 +1,124 @@
-/* 
-When one of the buttons is clicked, send the new button state to the ESP8266.
-*/
-let buttonChanged = false;
+let WS;
+let WStimeout;
+let pingInterval;
 
-function sendButtonState(button, state) {
-    console.log(button + ": " + state);
-    buttonChanged = true;
-    let request = new XMLHttpRequest();
-    request.open("POST", "/output");
-    request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    request.send("output=" + encodeURI(button) + "&state=" + state);
-}
+const pingTimeout = 1500;  // 1.5 seconds
 
-/*
-When the page loads, request a JSON array from the ESP8266 that contains the states of all buttons.
-When you get the JSON array, call the displayAllButtons function that adds the buttons to the HTML page,
-and sets their states.
-Then wait 500ms and update the button states by calling the updateStates function.
-*/
-let initial_states_request = new XMLHttpRequest();
-initial_states_request.onreadystatechange = function () {
-    if (this.readyState !== XMLHttpRequest.DONE)
-        return;
-    if (this.status === 200) {
-        displayAllButtons(this);
-    } else {
-        offline();
+function startWS() {
+    console.log("Start WebSocket");
+    WS = new WebSocket('ws://' + location.hostname + ':81/', ['arduino']);
+    WS.onopen = function () {
+        online();
+        pingInterval = setInterval(ping, pingTimeout);
+    };
+    WS.onerror = function (error) {
+        console.error('WebSocket Error ', error);
+    };
+    WS.onclose = function (ev) {
+        console.error("WebSocket Closed ", ev);
+        WSclose();
     }
-};
-initial_states_request.open("GET", "/output");
-initial_states_request.send();
+    WS.onmessage = function (ev) {
+        clearTimeout(WStimeout);
 
-function displayAllButtons(xhr) {   // Loops over all elements of the JSON array in the XHR response, 
-    // and adds one button on the screen for each element.
-    // the state of the button will be the state specified in the array.
-    JSON.parse(xhr.response).forEach(displayButton);
-    setTimeout(updateStates, 500);  // Update the button states over half a second
-    buttonChanged = false;
+        console.log(ev.data);
+        if (ev.data.charAt(0) === '#') {
+            let nb_outputs = parseInt(ev.data.substring(1, 3), 16)
+            displayAllButtons(nb_outputs);
+            return;
+        }
+
+        let split_data = ev.data.split(':', 2);
+        if (split_data.length != 2) {
+            return;
+        }
+        let output = split_data[0];
+        let state = split_data[1] === '1';
+        console.log("Output " + output + ": " + state);
+
+        updateButton(output, state);
+    }
 }
 
-function displayButton(state, button) {     // Add one HTML button to the web page, 
-    // with the specified state ('0' == off or '1' == on) and button index
+function ping() {
+    if (WS.readyState !== WebSocket.OPEN) {
+        console.error("Connection not open: " + WS.readyState);
+        return;
+    }
+    if(!WS) {
+        console.error("No WebSocket");
+        return;
+    }
+    WS.send("p");  // send ping to server
+    WStimeout = setTimeout(function () {
+        console.error("Ping timeout");
+        WSclose();
+    }, pingTimeout);
+}
+
+function WSclose() {
+    clearInterval(pingInterval);
+    offline();
+    WS = null;  // delete the current WebSocket
+    setTimeout(startWS, 5000);  // try connecting to WebSocket server again in 5 seconds
+}
+
+function sendButtonState() {
+    if (WS.readyState !== WebSocket.OPEN) {
+        console.error("Connection not open: " + WS.readyState);
+        return;
+    }
+    if(!WS) {
+        console.error("No WebSocket");
+        return;
+    }
+    let button = this.id;
+    let state = this.checked;
+    console.log("Button " + button + ": " + state);
+    WS.send(button + ":" + (state ? "1" : "0"));
+}
+
+function displayAllButtons(nb_buttons) {
+    console.log("DisplayAllButtons: " + nb_buttons);
+    for (button = 0; button < nb_buttons; button++) {
+        displayButton(button);
+    }
+}
+
+function displayButton(button) {     // Add one HTML button to the web page
     let buttondiv = document.createElement("div");
     buttondiv.innerHTML =
         `<h2>Output ${button + 1}</h2>\
                 <label class="switch">
-                    <input id="${button}" type="checkbox" onchange="sendButtonState(this.id,this.checked?'1':'0');">
+                    <input id="${byte_to_str(button)}" type="checkbox">
                     <div class="slider round"></div>
                 </label>`;
     let checkbox = buttondiv.getElementsByTagName("input")[0];
-    checkbox.checked = state;
+    checkbox.onchange = sendButtonState;
     document.getElementById("buttonContainer").appendChild(buttondiv);
 }
 
-/*
-Send a new request to the ESP8266 and request the JSON array from the ESP8266 that contains the states of all buttons.
-If it loads correctly, use the JSON array to change the states of all buttons on the HTML page, 
-by calling the updateAllButtons function.
-If the request fails, call the offline function to enter the "offline" state and to notify the user that 
-the information on the screen is no longer up to date, because there's no connection to the ESP8266.
-If the web page was in the "offline" state, and now the request loads successfully, 
-exit the "offline" state by calling the online function.
-*/
-function updateStates() {
-    buttonChanged = false;
-
-    let states_req = new XMLHttpRequest();
-    states_req.onreadystatechange = function () {
-        if (this.readyState !== XMLHttpRequest.DONE)
-            return;
-        if (this.status === 200) {
-            updateAllButtons(this);
-            if (is_offline) {
-                online();
-            }
-        } else {
-            offline();
-        }
-    };
-    states_req.open("GET", "/output");
-    states_req.send();
-}
-
-/* 
-If no button was pressed since the start of the request, use the JSON response data to update all buttons.
-Then schedule the next response in half a second.
-If a button was pressed since the start of the request, the response may contain the old button states
-(the state before the button press was registered by the ESP8266),
-so ignore the response data, and send a new request right away.
-*/
-function updateAllButtons(xhr) {
-    if (buttonChanged) {
-        updateStates();
-    } else {
-        JSON.parse(xhr.response).forEach(updateButton);
-        setTimeout(updateStates, 500);
+function deleteButtons() {
+    let buttonContainer = document.getElementById("buttonContainer");
+    while (buttonContainer.firstChild) {
+        buttonContainer.removeChild(buttonContainer.firstChild);
     }
 }
 
-function updateButton(state, button) {  // change the state of a button with a given index
-    let checkbox = document.getElementById(button.toString());
+function byte_to_str(val) {
+    return nibble_to_hex(val >> 4) + nibble_to_hex(val);
+}
+
+function nibble_to_hex(nibble) {
+    nibble &= 0xF;
+    return String.fromCharCode(nibble > 9 ? nibble - 10 + 'A'.charCodeAt(0) : nibble + '0'.charCodeAt(0));
+}
+
+function updateButton(button, state) {  // change the state of a button with a given id
+    let checkbox = document.getElementById(button);
     checkbox.checked = state;
 }
 
-/*
-When there is no connection, add a div to the bottom of the page to notify the user that 
-the information on the screen is no longer up to date, because there's no connection to the ESP8266.
-Also blur the control panel, and make it non-clickable.
-When the "Retry" button is pressed, send a new request by calling the updateStates function.   
-*/
 let is_offline = false;
 
 function offline() {
@@ -119,12 +129,6 @@ function offline() {
     offlineDiv.id = "offlineDiv";
     offlineDiv.appendChild(document.createTextNode("Connection lost"));
 
-    let retryButton = document.createElement("button");
-    retryButton.appendChild(document.createTextNode("Retry"));
-    retryButton.onclick = updateStates;
-
-    offlineDiv.appendChild(retryButton);
-
     document.body.appendChild(offlineDiv);
 
     let buttonContainer = document.getElementById("buttonContainer");
@@ -132,14 +136,15 @@ function offline() {
     buttonContainer.style.pointerEvents = "none";
 }
 
-/*
-When the control panel is back online, remove the div with the "Connection lost" notification,
-unblur the control panel, and make it clickable again.
-*/
 function online() {
     is_offline = false;
-    document.body.removeChild(document.getElementById("offlineDiv"));
+    deleteButtons();
+    let offlineDiv = document.getElementById("offlineDiv");
+    if (offlineDiv)
+        document.body.removeChild(offlineDiv);
     let buttonContainer = document.getElementById("buttonContainer");
     buttonContainer.style.filter = "none";
     buttonContainer.style.pointerEvents = "auto";
 }
+
+startWS();
