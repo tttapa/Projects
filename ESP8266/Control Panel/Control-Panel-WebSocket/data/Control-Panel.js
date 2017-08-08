@@ -1,28 +1,39 @@
 let WS;
 let WStimeout;
 let pingInterval;
+let serverTimeout;
 
-const pingTimeout = 1500;  // 1.5 seconds
+const serverTimeoutTime = 20000;  // reload after 20 seconds
+
+const pingTimeout = 3000;  // 3 seconds
 
 function startWS() {
     console.log("Start WebSocket");
     WS = new WebSocket('ws://' + location.hostname + ':81/', ['arduino']);
     WS.onopen = function () {
+        console.log("WebSocket Connected +++++++++++++++++++++++++++")
         online();
         pingInterval = setInterval(ping, pingTimeout);
+        if (serverTimeout)
+            clearTimeout(serverTimeout);
     };
     WS.onerror = function (error) {
         console.error('WebSocket Error ', error);
     };
     WS.onclose = function (ev) {
-        console.error("WebSocket Closed ", ev);
-        clearInterval(pingInterval);
-        offline();
-        setTimeout(startWS, 5000);  // try connecting to WebSocket server again in 5 seconds
+        console.error("WebSocket Closed ----------------------------", ev);
+        location.reload();
     }
     WS.onmessage = function (ev) {
         clearTimeout(WStimeout);
         online();
+
+        if (serverTimeout)
+            clearTimeout(serverTimeout);
+        serverTimeout = setTimeout(function () {
+            console.error("Server timeout");
+            location.reload();
+        }, serverTimeoutTime);
 
         console.log(ev.data);
         if (ev.data.charAt(0) === '#') {
@@ -113,6 +124,7 @@ let is_offline = false;
 function offline() {
     if (is_offline)
         return;
+    console.error("OFFLINE");
     is_offline = true;
     let offlineDiv = document.createElement("div");
     offlineDiv.id = "offlineDiv";
@@ -126,8 +138,9 @@ function offline() {
 }
 
 function online() {
-    if(!is_offline)
+    if (!is_offline)
         return;
+    console.log("ONLINE");
     is_offline = false;
     // deleteButtons();
     let offlineDiv = document.getElementById("offlineDiv");

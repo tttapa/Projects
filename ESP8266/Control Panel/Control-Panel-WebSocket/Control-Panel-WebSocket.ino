@@ -25,6 +25,10 @@ const uint8_t  nb_outputs = sizeof(outputs);
 char nb_outputs_str[4] = "#FF";  // "#FF" + null
 char output_state_str[5] = "FF:S";  // "FF:S" + null
 
+unsigned long lastClientActivity[WEBSOCKETS_SERVER_CLIENT_MAX];
+bool connectedClients[WEBSOCKETS_SERVER_CLIENT_MAX] = {};
+const unsigned long clientTimeout = 10000;
+
 /*__________________________________________________________SETUP__________________________________________________________*/
 
 void setup() {
@@ -89,21 +93,30 @@ char nibble_to_hex(uint8_t nibble) {
 void webSocketEvent(uint8_t WS_client_num, WStype_t type, uint8_t * payload, size_t length) {
   switch (type) {
     case WStype_DISCONNECTED:
-      Serial.printf("[%u] Disconnected!\n", WS_client_num);
+      Serial.printf("[%u] Disconnected!\r\n", WS_client_num);
+      connectedClients[WS_client_num] = false;
       break;
     case WStype_CONNECTED:
       {
         IPAddress ip = webSocket.remoteIP(WS_client_num);
         Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", WS_client_num, ip[0], ip[1], ip[2], ip[3], payload);
-        webSocket.sendTXT(WS_client_num, nb_outputs_str); // send the number of outputs, e.g. "#0A" for 10 (=0xA) outputs
+        
+        char numstr[4];
+        sprintf(numstr, "+%02X", WS_client_num);
+        sendTXTDebug(WS_client_num, numstr);
+        connectedClients[WS_client_num] = true;
+        lastClientActivity[WS_client_num] = millis();
+        sendTXTDebug(WS_client_num, nb_outputs_str); // send the number of outputs, e.g. "#0A" for 10 (=0xA) outputs
         sendAllStates(WS_client_num);
       }
       break;
     case WStype_TEXT:
       {
         Serial.printf("[%u] get Text: %s\r\n", WS_client_num, payload);
+        lastClientActivity[WS_client_num] = millis();
+
         if (payload[0] == 'p') {  // reply to ping/pong
-          webSocket.sendTXT(WS_client_num, "p");
+          sendTXTDebug(WS_client_num, "p");
           return;
         }
 
@@ -124,7 +137,7 @@ void webSocketEvent(uint8_t WS_client_num, WStype_t type, uint8_t * payload, siz
         Serial.printf("Output %d: %d\r\n", output, state);
         digitalWrite(outputs[output], state);  // Set the selected output accordingly
 
-        webSocket.broadcastTXT(payload);  // broadcast the state change to all connected clients to update their interface
+        broadcastDebug(payload);  // broadcast the state change to all connected clients to update their interface
       }
       break;
   }
@@ -162,7 +175,41 @@ bool isHexChar(char hex) {
 void sendAllStates(uint8_t WS_client_num) {
   for (uint8_t output = 0; output < nb_outputs; output++) {
     generate_state_str(output_state_str, output);
-    webSocket.sendTXT(WS_client_num, output_state_str);
+    sendTXTDebug(WS_client_num, output_state_str);
+  }
+}
+
+void broadcastDebug(uint8_t* payload) {
+  disconnectOldClients();
+
+  Serial.print("\tBroadcasting: ");
+  Serial.print((char*) payload);
+  Serial.print("\t(");
+  unsigned long start = millis();
+  webSocket.broadcastTXT(payload);
+  Serial.print(millis() - start);
+  Serial.println(')');
+}
+
+void sendTXTDebug(uint8_t num, char* payload) {
+  disconnectOldClients();
+
+  Serial.printf("\tSending [%d]: ", num);
+  Serial.print(payload);
+  Serial.print("\t(");
+  unsigned long start = millis();
+  webSocket.sendTXT(num, payload);
+  Serial.print(millis() - start);
+  Serial.println(')');
+}
+
+void disconnectOldClients() {
+  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+    if (millis() - lastClientActivity[num] > clientTimeout && connectedClients[num]) {
+      Serial.printf("[%u] Timeout\r\n", num);
+      webSocket.disconnect(num);
+      connectedClients[num] = false;
+    }
   }
 }
 
