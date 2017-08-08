@@ -10,24 +10,30 @@
     <!-- <script src="Control-Panel.js"></script> -->
     <script>
         let WS;
+        let WStimeout;
+        let pingInterval;
+
         startWS();
 
         function startWS() {
             WS = new WebSocket('ws://' + location.hostname + ':81/', ['arduino']);
-            // WS.onopen = function() {};
+            WS.onopen = function () {
+                pingInterval = setInterval(ping, 1000);
+            };
             WS.onerror = function (error) {
                 console.log('WebSocket Error ', error);
             };
             WS.onclose = function (ev) {
-                console.log("WebSocket Disconnected ", ev);
-                WS = null;
-                setTimeout(startWS, 5000);
+                WSclose(ev);
             }
             WS.onmessage = function (ev) {
+                clearTimeout(WStimeout);
+
                 console.log(ev.data);
                 if (ev.data.charAt(0) === '#') {
                     let nb_outputs = parseInt(ev.data.substring(1, 3), 16)
                     displayAllButtons(nb_outputs);
+                    return;
                 }
 
                 let split_data = ev.data.split(':', 2);
@@ -40,6 +46,22 @@
 
                 updateButton(output, state);
             }
+        }
+
+        function WSclose(ev) {
+            console.log("WebSocket Disconnected ", ev);
+            let buttonContainer = document.getElementById("buttonContainer");
+            while (buttonContainer.firstChild) {
+                buttonContainer.removeChild(buttonContainer.firstChild);
+            }
+            clearInterval(pingInterval);
+            WS = null;
+            setTimeout(startWS, 5000);
+        }
+
+        function ping() {
+            WS.send("p");  // send ping to server
+            WStimeout = setTimeout(WSclose, 500);
         }
 
         function sendButtonState() {

@@ -66,7 +66,6 @@ void startOutputs() {  // Set all LED pins to outputs
   for (uint8_t i = 0; i < nb_outputs; i++) {
     pinMode(outputs[i], OUTPUT);
   }
-  digitalWrite(outputs[1], HIGH);
 }
 
 void generate_nb_outputs_str() {
@@ -107,10 +106,10 @@ void webSocketEvent(uint8_t WS_client_num, WStype_t type, uint8_t * payload, siz
       {
         Serial.printf("[%u] get Text: %s\r\n", WS_client_num, payload);
 
-        /*  Parse the client's request.
-            The format should be "output:state",
-            so use strtok to split the string on ':'
-        */
+        if (payload[0] == 'p') {  // reply to ping/pong
+          webSocket.sendTXT(WS_client_num, "p");
+          return;
+        }
 
         if (length != sizeof(output_state_str) -  1) {
           Serial.println("Length mismatch");
