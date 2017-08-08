@@ -96,20 +96,21 @@ void webSocketEvent(uint8_t WS_client_num, WStype_t type, uint8_t * payload, siz
         IPAddress ip = webSocket.remoteIP(WS_client_num);
         Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", WS_client_num, ip[0], ip[1], ip[2], ip[3], payload);
         webSocket.sendTXT(WS_client_num, nb_outputs_str); // send the number of outputs, e.g. "#0A" for 10 (=0xA) outputs
-        for (uint8_t output = 0; output < nb_outputs; output++) {
-          generate_state_str(output_state_str, output);
-          webSocket.sendTXT(WS_client_num, output_state_str);
-        }
+        sendAllStates(WS_client_num);
       }
       break;
     case WStype_TEXT:
       {
+        Serial.printf("[%u] get Text: %s\r\n", WS_client_num, payload);
         if (payload[0] == 'p') {  // reply to ping/pong
           webSocket.sendTXT(WS_client_num, "p");
           return;
         }
-        Serial.printf("[%u] get Text: %s\r\n", WS_client_num, payload);
 
+        if (payload[0] == '?') {
+          sendAllStates(WS_client_num);
+          return;
+        }
         if (!validOutputChangeMsg(payload, length)) {
           Serial.println("Invalid message");
           return;
@@ -117,7 +118,7 @@ void webSocketEvent(uint8_t WS_client_num, WStype_t type, uint8_t * payload, siz
 
         uint8_t output = hex_to_byte((char*) payload);
         bool state = payload[3] - '0';
-        
+
         if (output >= nb_outputs)  // The request is invalid, because the output doesn't exist
           return;
         Serial.printf("Output %d: %d\r\n", output, state);
@@ -147,14 +148,21 @@ uint8_t hex_to_nibble(char hex) {
 }
 
 bool validOutputChangeMsg(uint8_t* payload, size_t length) {
-  return (length == sizeof(output_state_str) -  1) 
-    && isHexChar(payload[0])
-    && isHexChar(payload[1])
-    && (payload[2] == ':') 
-    && (payload[3] == '0' || payload[3] == '1');
+  return (length == sizeof(output_state_str) -  1)
+         && isHexChar(payload[0])
+         && isHexChar(payload[1])
+         && (payload[2] == ':')
+         && (payload[3] == '0' || payload[3] == '1');
 }
 
 bool isHexChar(char hex) {
   return (hex >= '0' && hex <= '9') || (hex >= 'A' && hex <= 'F');
+}
+
+void sendAllStates(uint8_t WS_client_num) {
+  for (uint8_t output = 0; output < nb_outputs; output++) {
+    generate_state_str(output_state_str, output);
+    webSocket.sendTXT(WS_client_num, output_state_str);
+  }
 }
 

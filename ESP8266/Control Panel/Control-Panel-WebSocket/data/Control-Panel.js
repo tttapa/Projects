@@ -16,14 +16,18 @@ function startWS() {
     };
     WS.onclose = function (ev) {
         console.error("WebSocket Closed ", ev);
-        WSclose();
+        clearInterval(pingInterval);
+        offline();
+        setTimeout(startWS, 5000);  // try connecting to WebSocket server again in 5 seconds
     }
     WS.onmessage = function (ev) {
         clearTimeout(WStimeout);
+        online();
 
         console.log(ev.data);
         if (ev.data.charAt(0) === '#') {
-            let nb_outputs = parseInt(ev.data.substring(1, 3), 16)
+            let nb_outputs = parseInt(ev.data.substring(1, 3), 16);
+            deleteButtons();
             displayAllButtons(nb_outputs);
             return;
         }
@@ -45,31 +49,16 @@ function ping() {
         console.error("Connection not open: " + WS.readyState);
         return;
     }
-    if(!WS) {
-        console.error("No WebSocket");
-        return;
-    }
     WS.send("p");  // send ping to server
     WStimeout = setTimeout(function () {
         console.error("Ping timeout");
-        WSclose();
+        offline();
     }, pingTimeout);
-}
-
-function WSclose() {
-    clearInterval(pingInterval);
-    offline();
-    WS = null;  // delete the current WebSocket
-    setTimeout(startWS, 5000);  // try connecting to WebSocket server again in 5 seconds
 }
 
 function sendButtonState() {
     if (WS.readyState !== WebSocket.OPEN) {
         console.error("Connection not open: " + WS.readyState);
-        return;
-    }
-    if(!WS) {
-        console.error("No WebSocket");
         return;
     }
     let button = this.id;
@@ -137,14 +126,22 @@ function offline() {
 }
 
 function online() {
+    if(!is_offline)
+        return;
     is_offline = false;
-    deleteButtons();
+    // deleteButtons();
     let offlineDiv = document.getElementById("offlineDiv");
     if (offlineDiv)
         document.body.removeChild(offlineDiv);
     let buttonContainer = document.getElementById("buttonContainer");
     buttonContainer.style.filter = "none";
     buttonContainer.style.pointerEvents = "auto";
+
+    if (WS.readyState !== WebSocket.OPEN) {
+        console.error("Connection not open: " + WS.readyState);
+        return;
+    }
+    WS.send("?");
 }
 
 startWS();
