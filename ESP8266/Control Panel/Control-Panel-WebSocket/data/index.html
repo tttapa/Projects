@@ -24,7 +24,7 @@
                 console.log('WebSocket Error ', error);
             };
             WS.onclose = function (ev) {
-                WSclose(ev);
+                ping();
             }
             WS.onmessage = function (ev) {
                 clearTimeout(WStimeout);
@@ -49,19 +49,31 @@
         }
 
         function WSclose(ev) {
+            clearInterval(pingInterval);
             console.log("WebSocket Disconnected ", ev);
             let buttonContainer = document.getElementById("buttonContainer");
             while (buttonContainer.firstChild) {
                 buttonContainer.removeChild(buttonContainer.firstChild);
             }
-            clearInterval(pingInterval);
-            WS = null;
+            delete WS;
             setTimeout(startWS, 5000);
         }
 
         function ping() {
+            if(!WS)
+                return;
+            if (WS.readyState >= WebSocket.CLOSING) {
+                WSclose();
+                return;
+            }
+            if (WS.readyState !== WebSocket.OPEN)
+                return;
             WS.send("p");  // send ping to server
-            WStimeout = setTimeout(WSclose, 500);
+            WStimeout = setTimeout(function () {
+                if (WS.readyState === WebSocket.OPEN) {
+                    WS.close();
+                }
+            }, 500);
         }
 
         function sendButtonState() {
