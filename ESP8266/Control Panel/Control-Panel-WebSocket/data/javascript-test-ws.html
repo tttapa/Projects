@@ -1,0 +1,62 @@
+<html>
+
+<head>
+    <title>ESP8266 Control Panel</title>
+    <link rel="stylesheet" type="text/css" href="main.css">
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport'>
+</head>
+
+<body>
+    <!-- <script src="Control-Panel.js"></script> -->
+    <script>
+        let WS;
+        let WStimeout;
+        let pingInterval;
+
+        startWS();
+
+        function startWS() {
+            console.log("Start WebSocket");
+            WS = new WebSocket('ws://' + location.hostname + ':81/');
+            WS.onopen = function () {
+                pingInterval = setInterval(ping, 1000);
+            };
+            WS.onerror = function (err) {
+                console.log('WebSocket Error ', err);
+            };
+            WS.onclose = function (ev) {
+                console.log("WebSocket Closed ", ev);
+                WSclose();
+            }
+            WS.onmessage = function (ev) {
+                clearTimeout(WStimeout);  // server is still online, clear "ping" timeout
+                console.log(ev.data);
+                // ... handle incoming data
+            }
+        }
+
+        function ping() {
+            if (!WS || WS.readyState !== WebSocket.OPEN) {
+                console.log("Connection not open: " + WS.readyState);
+                return;
+            }
+            WS.send("p");  // send ping to server
+            WStimeout = setTimeout(function () {  // if it doesn't respond within a second
+                if (WS && WS.readyState === WebSocket.OPEN) {  // and if the connection is still open
+                    console.error("Ping timed out: closing WebSocket connection...");
+                    WSclose();  // close the connection
+                }
+            }, 1000);
+        }
+
+        function WSclose() {
+            clearInterval(pingInterval);
+            // ... let user know that the connection is lost
+            WS = null;  // delete the current WebSocket
+            setTimeout(startWS, 5000);  // try connecting to WebSocket server again in 5 seconds
+        }
+    </script>
+    <div id="buttonContainer"></div>
+</body>
+
+</html>

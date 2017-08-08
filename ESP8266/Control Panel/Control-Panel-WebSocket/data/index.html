@@ -16,6 +16,7 @@
         startWS();
 
         function startWS() {
+            console.log("Start WebSocket");
             WS = new WebSocket('ws://' + location.hostname + ':81/', ['arduino']);
             WS.onopen = function () {
                 pingInterval = setInterval(ping, 1000);
@@ -24,7 +25,8 @@
                 console.log('WebSocket Error ', error);
             };
             WS.onclose = function (ev) {
-                ping();
+                console.log("WebSocket Closed ", ev);
+                WSclose();
             }
             WS.onmessage = function (ev) {
                 clearTimeout(WStimeout);
@@ -48,35 +50,34 @@
             }
         }
 
-        function WSclose(ev) {
+        function ping() {
+            if (!WS || WS.readyState !== WebSocket.OPEN) {
+                console.log("Connection not open: " + WS.readyState);
+                return;
+            }
+            WS.send("p");  // send ping to server
+            WStimeout = setTimeout(function () {
+                if (WS && WS.readyState === WebSocket.OPEN) {
+                    WSclose();
+                }
+            }, 1000);
+        }
+
+        function WSclose() {
             clearInterval(pingInterval);
-            console.log("WebSocket Disconnected ", ev);
             let buttonContainer = document.getElementById("buttonContainer");
             while (buttonContainer.firstChild) {
                 buttonContainer.removeChild(buttonContainer.firstChild);
             }
-            delete WS;
-            setTimeout(startWS, 5000);
-        }
-
-        function ping() {
-            if(!WS)
-                return;
-            if (WS.readyState >= WebSocket.CLOSING) {
-                WSclose();
-                return;
-            }
-            if (WS.readyState !== WebSocket.OPEN)
-                return;
-            WS.send("p");  // send ping to server
-            WStimeout = setTimeout(function () {
-                if (WS.readyState === WebSocket.OPEN) {
-                    WS.close();
-                }
-            }, 500);
+            WS = null;  // delete the current WebSocket
+            setTimeout(startWS, 5000);  // try connecting to WebSocket server again in 5 seconds
         }
 
         function sendButtonState() {
+            if (!WS || WS.readyState !== WebSocket.OPEN) {
+                console.log("Connection not open: " + WS.readyState);
+                return;
+            }
             let button = this.id;
             let state = this.checked;
             console.log("Button " + button + ": " + state);
