@@ -1,0 +1,89 @@
+<html>
+
+<head>
+    <title>ESP8266 Control Panel</title>
+    <link rel="stylesheet" type="text/css" href="main.css">
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport'>
+</head>
+
+<body>
+    <!-- <script src="Control-Panel.js"></script> -->
+    <script>
+        let WS;
+        startWS();
+
+        function startWS() {
+            WS = new WebSocket('ws://' + location.hostname + ':81/', ['arduino']);
+            // WS.onopen = function() {};
+            WS.onerror = function (error) {
+                console.log('WebSocket Error ', error);
+            };
+            WS.onclose = function (ev) {
+                console.log("WebSocket Disconnected ", ev);
+                WS = null;
+                setTimeout(startWS, 5000);
+            }
+            WS.onmessage = function (ev) {
+                console.log(ev.data);
+                if (ev.data.charAt(0) === '#') {
+                    let nb_outputs = parseInt(ev.data.substring(1, 3), 16)
+                    displayAllButtons(nb_outputs);
+                }
+
+                let split_data = ev.data.split(':', 2);
+                if (split_data.length != 2) {
+                    return;
+                }
+                let output = split_data[0];
+                let state = split_data[1] === '1';
+                console.log("Output " + output + ": " + state);
+
+                updateButton(output, state);
+            }
+        }
+
+        function sendButtonState() {
+            let button = this.id;
+            let state = this.checked;
+            console.log("Button " + button + ": " + state);
+            WS.send(button + ":" + (state ? "1" : "0"));
+        }
+
+        function displayAllButtons(nb_buttons) {
+            console.log("DisplayAllButtons: " + nb_buttons);
+            for (button = 0; button < nb_buttons; button++) {
+                displayButton(button);
+            }
+        }
+
+        function displayButton(button) {     // Add one HTML button to the web page
+            let buttondiv = document.createElement("div");
+            buttondiv.innerHTML =
+                `<h2>Output ${button + 1}</h2>\
+                <label class="switch">
+                    <input id="${byte_to_str(button)}" type="checkbox">
+                    <div class="slider round"></div>
+                </label>`;
+            let checkbox = buttondiv.getElementsByTagName("input")[0];
+            checkbox.onchange = sendButtonState;
+            document.getElementById("buttonContainer").appendChild(buttondiv);
+        }
+
+        function byte_to_str(val) {
+            return nibble_to_hex(val >> 4) + nibble_to_hex(val);
+        }
+
+        function nibble_to_hex(nibble) {
+            nibble &= 0xF;
+            return String.fromCharCode(nibble > 9 ? nibble - 10 + 'A'.charCodeAt(0) : nibble + '0'.charCodeAt(0));
+        }
+
+        function updateButton(button, state) {  // change the state of a button with a given id
+            let checkbox = document.getElementById(button);
+            checkbox.checked = state;
+        }
+    </script>
+    <div id="buttonContainer"></div>
+</body>
+
+</html>
