@@ -3,6 +3,10 @@
 
 #include "WiFi-Credentials.h"
 
+/*
+   Change the WiFi hostname, set the WiFi mode,
+   and connect to the WiFi network specified in WiFi-Credentials.h.
+*/
 void startWiFi() {
   WiFi.hostname(WiFiHostname);
   WiFi.mode(WIFI_STA);
@@ -11,7 +15,10 @@ void startWiFi() {
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);          // Connect to a given access point (specified in WiFi-Credentials.h)
 }
 
-void startMDNS() {  // Start the mDNS responder
+/*
+   Start the mDNS responder.
+*/
+void startMDNS() {
   static bool mDNSstarted = false;
   if (mDNSstarted)
     return;
@@ -25,6 +32,10 @@ void startMDNS() {  // Start the mDNS responder
   mDNSstarted = true;
 }
 
+/*
+   Check if the WiFi is connected, if so, print the SSID and IP address, and start mDNS,
+   else print that it's disconnected.
+*/
 void printIP() {
   static boolean printed = false;
   if (WiFi.status() == WL_CONNECTED) {
@@ -34,10 +45,13 @@ void printIP() {
     Serial.println(WiFi.SSID());
     Serial.print("IP address:\t");
     Serial.println(WiFi.localIP());
+    Serial.print("\tTime: ");
+    Serial.println(millis());
     startMDNS();
+    Serial.println();
     printed = true;
-  } else {
-    if(!printed)
+  } else {  // if WiFi is not connected
+    if (!printed)
       return;
     Serial.println("WiFi disconnected!");
     printed = false;

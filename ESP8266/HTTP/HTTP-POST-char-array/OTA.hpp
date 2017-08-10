@@ -1,5 +1,8 @@
 #include <ArduinoOTA.h>
 
+/*
+    Start the OTA service
+*/
 void startOTA() {  // Start the OTA service
   ArduinoOTA.setHostname(OTAName);
   ArduinoOTA.setPassword(OTAPassword);
