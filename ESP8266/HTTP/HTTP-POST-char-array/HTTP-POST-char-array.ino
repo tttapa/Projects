@@ -75,9 +75,9 @@ void loop() {
   if (now - last_POST > POST_interval) {      // Blink Without Delay
     if (WiFi.status() == WL_CONNECTED) {
 
-      int values[nb_fields] = { value++, -3, -2147483648};         // An array containing the values to send to the server
-      size_t bodyLen = generateBodyStr(httpBody, values);          // Generate the string for the body of the request
-      bool success = sendHttpPost(httpHeader, httpBody, bodyLen);  // Send the HTTP request
+      int values[nb_fields] = { value++, 2147483647, -2147483648};   // An array containing the values to send to the server
+      size_t bodyLen = generateBodyStr(httpBody, values);            // Generate the string for the body of the request
+      bool success = sendHttpPost(httpHeader, httpBody, bodyLen);    // Send the HTTP request
 
       if (success) {
         Serial.println("HTTP request successful");
