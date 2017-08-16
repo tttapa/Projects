@@ -114,7 +114,6 @@ function displayAllSliders(nb_outputs) {
 
 /*
 Add one HTML input of type 'range' (slider) to the web page.
-https://www.w3schools.com/howto/howto_css_switch.asp
 */
 function displaySlider(index) {
     let slidercontainer = document.createElement("div");
