@@ -88,7 +88,7 @@ function ping() {
 
 /*
 Sends a new slider value to the server.
-This is the oninput event of each slider.
+This is the onchange event of each slider.
 */
 function sendSliderValue() {
     if (WS.readyState !== WebSocket.OPEN) {  // if the WebSocket connection is not open
@@ -122,7 +122,7 @@ function displaySlider(index) {
         `<h2>Output ${index + 1}</h2>
          <input id="${byte_to_str(index)}" type="range" min="0" max="255" step="1" value="0">`;
     let slider = slidercontainer.getElementsByTagName("input")[0];
-    slider.oninput = sendSliderValue;
+    slider.onchange = sendSliderValue;
     document.getElementById("sliders").appendChild(slidercontainer);
 }
 
