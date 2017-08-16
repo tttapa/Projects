@@ -1,0 +1,60 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+div#sliders {
+  padding: 8px;
+  transition: filter 1s;
+  max-height: 100vh;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+div#offlineDiv {
+  position: fixed;
+  margin: 0;
+  padding: 16px;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  background-color: #EEE;
+  box-shadow: 0px -2px 5px #ccc;
+  box-sizing: border-box;
+}
+
+div#offlineDiv>button {
+  display: block;
+  margin: 6px auto;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    outline: none;
+    width: 255px;
+    max-width: 100%;
+    margin: 6px auto;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    border: 0px;
+    height: 15px;
+    width: 15px;
+    margin-top: -6px;
+    border-radius: 7.5px;
+    background: #2196F3;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: inherit;
+    height: 4px;
+    background: #ccc;
+    border-radius: 1px;
+}
