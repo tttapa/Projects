@@ -1,8 +1,8 @@
-/* 
- *  This sketch reads data from the Serial input stream of the format "<COMMAND|Value1,Value2,Value3,...,ValueN>"
- *  and parses it into the COMMAND and an array of N values.
- *  Whitespace is ignored.
- */
+/*
+    This sketch reads data from the Serial input stream of the format "<COMMAND|Value1,Value2,Value3,...,ValueN>"
+    and parses it into the COMMAND and an array of N values.
+    Whitespace is ignored.
+*/
 
 #define START_MARKER '<'
 #define END_MARKER '>'
@@ -49,61 +49,47 @@ void loop()
         { // If the start marker has been received
             if (!commandReceived)
             { // If the command hasn't been received yet
-                if (serialByte == COMMAND_SEP || serialByte == END_MARKER || bufferIndex == cmdBuffLen)
-                { // If the command separator is received or if the command buffer is full
-                    if (serialByte != END_MARKER && serialByte != COMMAND_SEP && bufferIndex == cmdBuffLen)
-                    {
-                        Serial.println("Error: command buffer is full, command is truncated");
-                    }
+                if (serialByte == COMMAND_SEP || serialByte == END_MARKER)
+                {                                  // If the command separator is received
                     cmdBuffer[bufferIndex] = '\0'; // Terminate the string in the buffer
+                    if (strcmp(cmdBuffer, "RAW") == 0)
+                    { // Check if the received string is "RAW"
+                        Serial.println("RAW:");
+                    }
+                    else
+                    {
+                        Serial.print("Unknown command (");
+                        Serial.print(cmdBuffer);
+                        Serial.println("):");
+                    }
                     if (serialByte == END_MARKER)
                     { // If the end marker is received
-                        if (strcmp(cmdBuffer, "RAW") == 0)
-                        { // Check if the received string is "RAW"
-                            Serial.println("RAW:");
-                        }
-                        else
-                        {
-                            Serial.print("Unknown command (");
-                            Serial.print(cmdBuffer);
-                            Serial.println("):");
-                        }
                         Serial.println("Message finished: (No data)");
                         Serial.println();
                         receiving = false; // Stop receivinng
                     }
-                    else if (serialByte == COMMAND_SEP)
+                    else
                     {
-                        if (strcmp(cmdBuffer, "RAW") == 0)
-                        { // Check if the received string is "RAW"
-                            Serial.println("RAW:");
-                        }
-                        else
-                        {
-                            Serial.print("Unknown command (");
-                            Serial.print(cmdBuffer);
-                            Serial.println("):");
-                        }
                         bufferIndex = 0; // Reset the index of the buffer to overwrite it with the numbers we're about to receive
                         commandReceived = true;
                     }
                 }
-                else
-                {                                          // If the received byte is not the command separator and the command buffer is not full
+                else if (bufferIndex < cmdBuffLen)
+                {                                          // If the received byte is not the command separator or the end marker and the command buffer is not full
                     cmdBuffer[bufferIndex++] = serialByte; // Write the new data into the buffer
                 }
-            }
-            else if (serialByte == VALUE_SEP || serialByte == END_MARKER || bufferIndex == buffLen)
-            { // If the value separator or the end marker is received, or if the buffer is full
-                if (bufferIndex == buffLen && !(serialByte == VALUE_SEP || serialByte == END_MARKER))
-                {
-                    Serial.println("Error: buffer is full, data is truncated");
+                else
+                { // If the command buffer is full
+                    Serial.println("Error: command buffer full, command is truncated");
                 }
+            }
+            else if (serialByte == VALUE_SEP || serialByte == END_MARKER)
+            { // If the value separator or the end marker is received
                 if (bufferIndex == 0)
                 { // If the buffer is still empty
                     Serial.println("\t(Empty input)");
                 }
-                else if (serialByte == VALUE_SEP || serialByte == END_MARKER)
+                else
                 {                               // If there's data in the buffer and the value separator or end marker is received
                     buffer[bufferIndex] = '\0'; // Terminate the string
                     parseInt(buffer);           // Parse the input
@@ -116,11 +102,14 @@ void loop()
                     Serial.println();
                     receiving = false; // Stop receivinng
                 }
-                return;
             }
-            else
+            else if (bufferIndex < buffLen)
             {                                       // If the received byte is not a special character and the buffer is not full yet
                 buffer[bufferIndex++] = serialByte; // Write the new data into the buffer
+            }
+            else
+            { // If the buffer is full
+                Serial.println("Error: buffer is full, data is truncated");
             }
             return; // Optional (check for next byte before executing the loop, may prevent the RX buffer from overflowing)
         }           // end if (receiving)
