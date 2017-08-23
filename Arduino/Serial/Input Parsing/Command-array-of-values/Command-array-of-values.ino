@@ -103,8 +103,8 @@ void loop()
                 { // If the buffer is still empty
                     Serial.println("\t(Empty input)");
                 }
-                else
-                {                               // If there's data in the buffer
+                else if (serialByte == VALUE_SEP || serialByte == END_MARKER)
+                {                               // If there's data in the buffer and the value separator or end marker is received
                     buffer[bufferIndex] = '\0'; // Terminate the string
                     parseInt(buffer);           // Parse the input
                     bufferIndex = 0;            // Reset the index of the buffer to overwrite it with the next number
