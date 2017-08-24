@@ -4,28 +4,27 @@
 class PushButton
 {
   public:
-
-    PushButton(uint8_t pin) : pin(pin) {
-      pinMode(pin, INPUT_PULLUP);
+    PushButton(uint8_t pin) // Constructor (executes when a PushButton object is created)
+      : pin(pin) { // remember the push button pin
+      pinMode(pin, INPUT_PULLUP); // enable the internal pull-up resistor
     };
-    bool isPressed()
+    bool isPressed() // read the button state check if the button has been pressed, debounce the button as well
     {
       bool pressed = false;
-      bool state = digitalRead(pin);
-      int8_t stateChange = state - previousState;
+      bool state = digitalRead(pin);               // read the button's state
+      int8_t stateChange = state - previousState;  // calculate the state change since last time
 
-      if (stateChange == falling) { // Button is pressed
-        if (millis() - previousBounceTime > debounceTime) {
-          pressed = true;
-          previousBounceTime = millis();
+      if (stateChange == falling) { // If the button is pressed (went from high to low)
+        if (millis() - previousBounceTime > debounceTime) { // check if the time since the last bounce is higher than the threshold
+          pressed = true; // the button is pressed
         }
       }
-      if (stateChange == rising) { // Button is released or bounces
-        previousBounceTime = millis();
+      if (stateChange == rising) { // if the button is released or bounces
+        previousBounceTime = millis(); // remember when this happened
       }
 
-      previousState = state;
-      return pressed;
+      previousState = state; // remember the current state
+      return pressed; // return true if the button was pressed and didn't bounce
     };
   private:
     uint8_t pin;
