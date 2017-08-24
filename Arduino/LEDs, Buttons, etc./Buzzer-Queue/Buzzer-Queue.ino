@@ -10,7 +10,7 @@ Buzzer buzzer = {buzzerPin};
 void setup() { }
 
 void loop() {
-  if (buttonPressed(button)) {
+  if (button.isPressed()) {
     buzzer.queueBeep(500, 500);
   }
   buzzer.refresh();
