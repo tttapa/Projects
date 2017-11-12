@@ -28,9 +28,9 @@ class PushButton
     bool previousState = HIGH;
     unsigned long previousBounceTime = 0;
 
-    const unsigned long debounceTime = 25;
-    const int8_t rising = HIGH - LOW;
-    const int8_t falling = LOW - HIGH;
+    const static unsigned long debounceTime = 25;
+    const static int8_t rising = HIGH - LOW;
+    const static int8_t falling = LOW - HIGH;
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
