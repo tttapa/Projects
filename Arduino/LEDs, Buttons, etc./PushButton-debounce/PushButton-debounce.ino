@@ -42,7 +42,9 @@ void setup() {
 }
 
 void loop() {
+    static bool LEDstate = LOW;
     if (button.isPressed()) {  // If the button is pressed
-        digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));  // Toggle the LED state
+        LEDstate = !LEDstate;  // Flip the state of the LED
+        digitalWrite(LED_BUILTIN, LEDstate);  // Write the new state to the LED
     }
 }
