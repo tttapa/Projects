@@ -9,6 +9,6 @@ try {  // connect to database
     array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
 } catch(PDOException $ex) {
   http_response_code(500);
-  echo "Unable to connect to the database";
   error_log($ex->getMessage());
+  die("Unable to connect to the database");
 }?>
