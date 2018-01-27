@@ -1,6 +1,6 @@
 <?php
 $database = "IoT";  // name of the database
-$username = "root";  // MySQL username
+$username = "mysql_user";  // MySQL username
 $password = "password123";  // MySQL password
 
 try {  // connect to database
