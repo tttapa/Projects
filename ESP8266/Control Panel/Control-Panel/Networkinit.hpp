@@ -2,10 +2,7 @@
 #include <ESP8266mDNS.h>
 
 #ifdef STATION
-#include <ESP8266WiFiMulti.h>
 #include "WiFi-Credentials.h"
-
-ESP8266WiFiMulti wifiMulti;       // Create an instance of the ESP8266WiFiMulti class, called 'wifiMulti'
 #endif
 
 void startWiFi() {  // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
@@ -15,6 +12,7 @@ void startWiFi() {  // Start a Wi-Fi access point, and try to connect to some gi
 #else
   WiFi.mode(WIFI_AP);
 #endif
+  WiFi.disconnect();
   WiFi.softAP(AP_ssid, AP_password);             // Start the access point
   Serial.print("Access Point \"");
   Serial.print(AP_ssid);

@@ -15,7 +15,7 @@ const char* mdnsName = "esp8266";          // Domain name for the mDNS responder
 
 #include <WebSocketsServer.h>
 
-WebSocketsServer webSocket = WebSocketsServer(81);
+WebSocketsServer webSocket(81);
 
 
 const uint8_t nb_outputs = 16;           // the total number of outputs
