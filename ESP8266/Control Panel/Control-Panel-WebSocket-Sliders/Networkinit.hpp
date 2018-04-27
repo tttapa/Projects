@@ -20,7 +20,8 @@ void startWiFi() {  // Start a Wi-Fi access point, and try to connect to some gi
 #ifdef STATION
   Serial.print("Connecting to ");
   Serial.println(WIFI_SSID);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);          // Connect to a given access point (specified in WiFi-Credentials.h)
+  if (WiFi.begin(WIFI_SSID, WIFI_PASSWORD) == WL_CONNECT_FAILED)          // Connect to a given access point (specified in WiFi-Credentials.h)
+    Serial.println("Connect failed (WL_CONNECT_FAILED)");
 #endif
 }
 
@@ -40,18 +41,33 @@ void startMDNS() {  // Start the mDNS responder
 
 void printIP() {
 #ifdef STATION
-  static boolean printed = false;
-  if (WiFi.status() == WL_CONNECTED) {
-    if (printed)
-      return;
-    Serial.print("Connected to ");
-    Serial.println(WiFi.SSID());
-    Serial.print("IP address:\t");
-    Serial.println(WiFi.localIP());
-    startMDNS();
-    printed = true;
-  } else {
-    printed = false;
+  static wl_status_t prev = WL_DISCONNECTED;
+  wl_status_t status = WiFi.status();
+  if (status == prev)
+    return;
+  prev = status;
+  switch(status) {
+    case WL_CONNECTED:
+      Serial.print("Connected to ");
+      Serial.println(WiFi.SSID());
+      Serial.print("IP address:\t");
+      Serial.println(WiFi.localIP());
+      startMDNS();
+      break;
+    case WL_NO_SSID_AVAIL:
+      Serial.println("Error: No SSID available");
+      break;
+    case WL_CONNECT_FAILED:
+      Serial.println("Error: Connect failed");
+      break;
+    case WL_IDLE_STATUS:
+      Serial.println("WiFi idle");
+      break;
+    case WL_DISCONNECTED:
+      Serial.println("WiFi disconnected");
+      break;
+    default:
+      Serial.println("Unknown WiFi status");
   }
 #endif
 }
