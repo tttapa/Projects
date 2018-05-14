@@ -1,0 +1,14 @@
+CREATE DATABASE IF NOT EXISTS `Arduino`
+  DEFAULT CHARACTER SET = utf8mb4
+  DEFAULT COLLATE = utf8mb4_general_ci;
+
+USE `Arduino`;
+
+CREATE TABLE IF NOT EXISTS `Data` (
+  `id` int(11) AUTO_INCREMENT NOT NULL,
+  PRIMARY KEY (`id`),
+  `data` varchar(255) NOT NULL,
+  `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE = InnoDB 
+  DEFAULT CHARSET = utf8mb4
+  DEFAULT COLLATE = utf8mb4_general_ci;
