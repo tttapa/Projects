@@ -98,6 +98,5 @@ bool receive(uint16_t &value, message_type &type) {
 }
 ```
 ### Examples
-[Serial-Protocol-Receiver](TODO): Receives serial messages, decodes them, and displays the 10-bit value and message type.  
-[Serial-Protocol-Sender](TODO): Sends encoded ECG messages over Serial with A0 values, as well as panic button messages when pin 2 is pulled low.  
-[Serial-Protocol-Sender-Data](TODO): Sends encoded ECG messages over Serial with ECG values from the MIT-BIH database from a buffer in flash memory (for testing purposes).  
+[Serial-Protocol-Receiver](Serial-Protocol-Receiver.ino): Receives serial messages, decodes them, and displays the 10-bit value and message type.  
+[Serial-Protocol-Sender](Serial-Protocol-Sender.ino): Sends encoded ECG messages over Serial with A0 values, as well as panic button messages when pin 2 is pulled low. 
