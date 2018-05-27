@@ -1,3 +1,8 @@
+/*
+  Receives serial messages, decodes them, and displays 
+  the 10-bit value and message type.
+ */
+
 #include "Serial_Protocol.h"
 
 void setup() {
