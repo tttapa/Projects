@@ -40,19 +40,24 @@
 
 let comName;
 // comName = '/dev/ttyUSB0'; // Uncomment this line to select a specific port instead of searching for an Arduino.
+const baudRate = 115200;
+
+const defaultLocalPort = 8888;
+const defaultRemotePort = 9999;
+const defaultRemoteAddress = 'localhost';
 
 // ------------ UDP ------------ //
 //#region UDP
 
-let localPort = 8888;
+let localPort = defaultLocalPort;
 if (process.argv.length > 2)
     localPort = parseInt(process.argv[2]);
 
-let remotePort = 9999;
+let remotePort = defaultRemotePort;
 if (process.argv.length > 3)
     remotePort = parseInt(process.argv[3]);
 
-let remoteAddr = 'localhost';
+let remoteAddr = defaultRemoteAddress;
 if (process.argv.length > 4)
     remoteAddr = process.argv[4];
 
@@ -93,7 +98,6 @@ function sendUDP(message) {
 const SerialPort = require('serialport');
 
 let port;
-const baudRate = 115200;
 
 if (comName) {
     openPort(comName);
