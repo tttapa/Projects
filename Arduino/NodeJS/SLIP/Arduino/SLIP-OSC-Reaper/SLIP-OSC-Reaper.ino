@@ -1,9 +1,9 @@
 /*
- * A simple OSC SLIP example.
+ * A simple OSC SLIP example, using the CNMAT/OSC library.
  * 
  * Connect a potentiometer to pin A0.
  * 
- * Connect the Arduino via USB and start the Node.js SLIP to UDP script.
+ * Connect the Arduino via USB and start the Node.js SLIP-to-UDP script.
  * Select the correct ports and IP address in Reaper.
  * 
  * When moving the potentiometer, the master volume should change.
@@ -14,6 +14,8 @@
  * byte it receives, probably resulting in heap fragmentation, causing
  * malloc to fail, crashing the entire program).
  * A simpler library with a static buffer could solve this problem.
+ * 
+ * https://github.com/tttapa/Projects/blob/master/Arduino/NodeJS/SLIP
  */
 
 #include "EMA.hpp"
@@ -62,7 +64,7 @@ void sendMasterVolume() {
 
 /* When receiving an OSC message on address
  *  /track/x/mute, check the track, and turn
- *  the built-in on when track 1 is muted,
+ *  on the built-in LED when track 1 is muted,
  *  or off when it is unmuted. 
  */
 void muteHandler(OSCMessage &msg) {

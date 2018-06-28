@@ -34,6 +34,8 @@
 
     Node.js: https://nodejs.org/
     node-serialport: https://github.com/node-serialport/node-serialport
+
+  https://github.com/tttapa/Projects/blob/master/Arduino/NodeJS/SLIP
 */
 
 let comName;
