@@ -62,10 +62,10 @@ server.on('error', (err) => {
     server.close();
 });
 
-server.on('message', (msg, rinfo) => {
-    console.log(`>>> ${msg.join(' ')} (${rinfo.address}:${rinfo.port})`);
+server.on('message', (message, rinfo) => {
+    console.log(`>>> ${message.join(' ')} (${rinfo.address}:${rinfo.port})`);
     remoteAddr = rinfo.address;
-    sendSerial(msg);
+    sendSerial(message);
 });
 
 server.on('listening', () => {
@@ -76,7 +76,7 @@ server.on('listening', () => {
 server.bind(localPort);
 
 function sendUDP(message) {
-    console.log(`<<< ${parser.message.join(' ')} (${remoteAddr}:${remotePort})`);
+    console.log(`<<< ${message.join(' ')} (${remoteAddr}:${remotePort})`);
     server.send(
         message, remotePort, remoteAddr,
         (err) => { if (err) console.error(`Unable to send UDP packet: ${err}`); }
