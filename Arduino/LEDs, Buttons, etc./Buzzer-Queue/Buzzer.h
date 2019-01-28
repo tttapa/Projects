@@ -48,7 +48,7 @@ class Buzzer {
     void refresh() {
       if (!beeping                // if the buzzer is off
           && (millis() - offTime) // and the time elapsed since the moment it was turned off
-          >= offDelay) {          // is longer than the time it was to stay off ofter the previous beep:
+          >= offDelay) {          // is longer than the time it was to stay off after the previous beep:
         beepEnable();             // turn on the next beep
       }
       if (beeping                 // if the buzzer is on
