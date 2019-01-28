@@ -7,7 +7,14 @@ const uint8_t buttonPin = 2;
 PushButton button = {buttonPin};
 Buzzer buzzer = {buzzerPin};
 
-void setup() { }
+void setup() {
+  buzzer.begin();
+  button.begin();
+  delay(1000);
+  buzzer.queueBeep(200, 200);
+  buzzer.queueBeep(200, 200);
+  buzzer.queueBeep(800, 200);
+}
 
 void loop() {
   if (button.isPressed()) {
