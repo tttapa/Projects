@@ -63,7 +63,7 @@ const uint8_t numberOfShiftRegisters = 3;
 const SPISettings settings = {8000000, MSBFIRST, SPI_MODE0};
 
 class ShiftRegCallbacks : public SLIPParserCallbacks {
-  public: // TODO
+  private:
     const uint8_t latchPin;
 
     void onPacketEnd() override {
