@@ -7,10 +7,10 @@ struct SLIPParserCallbacks {
 class SLIPParser {
   private:
     /* SLIP special character codes */
-    static constexpr uint8_t END             = 0300;    /* indicates end of packet */
-    static constexpr uint8_t ESC             = 0333;    /* indicates byte stuffing */
-    static constexpr uint8_t ESC_END         = 0334;    /* ESC ESC_END means END data byte */
-    static constexpr uint8_t ESC_ESC         = 0335;    /* ESC ESC_ESC means ESC data byte */
+    static constexpr uint8_t END     = 0300;  // indicates end of packet
+    static constexpr uint8_t ESC     = 0333;  // indicates byte stuffing
+    static constexpr uint8_t ESC_END = 0334;  // ESC ESC_END means END data byte
+    static constexpr uint8_t ESC_ESC = 0335;  // ESC ESC_ESC means ESC data byte
 
     bool ESC_received = false;
     SLIPParserCallbacks *callbacks = nullptr;
@@ -55,7 +55,7 @@ class SLIPParser {
     }
 };
 
-// ------------------------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
 
 #include <SPI.h>
 
