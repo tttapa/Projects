@@ -17,7 +17,7 @@ const char* WiFiHostname = OTAName;        // Host name on the network
 WebSocketsServer webSocket(81);
 
 
-const uint8_t nb_outputs = 1;            // the total number of outputs
+const uint8_t nb_outputs = 8;            // the total number of outputs
 uint8_t output_values[nb_outputs] = {};  // an array to keep track of the value of each output
 
 char nb_outputs_str[4] = "#AA";  // "#AA" + null, string message to let the client know how many (AA) sliders to show
@@ -212,5 +212,5 @@ void disconnectOldClients() {  // if clients haven't sent anything for more than
 void setOutput(uint8_t output, uint8_t value) {
   Serial.printf("Output %d: %d\r\n", output, value);
   if (output == 0)
-    analogWrite(LED_BUILTIN, 1020 - 4 * value);
+    analogWrite(LED_BUILTIN, 1023 - 4 * value);
 }
