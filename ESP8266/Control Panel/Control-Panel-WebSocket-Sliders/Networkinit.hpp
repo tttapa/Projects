@@ -25,18 +25,10 @@ void startWiFi() {  // Start a Wi-Fi access point, and try to connect to some gi
 #endif
 }
 
-void startMDNS() {  // Start the mDNS responder
-  static bool mDNSstarted = false;
-  if (mDNSstarted)
-    return;
-  if (!MDNS.begin(mdnsName)) {                       // start the multicast domain name server
-    Serial.println("Couldn't start mDNS responder");
-    return;
-  }
-  Serial.print("mDNS responder started: http://");
-  Serial.print(mdnsName);
-  Serial.println(".local");
-  mDNSstarted = true;
+void startMDNS() {
+  // ArduinoOTA handles MDNS now
+  MDNS.notifyAPChange();
+  MDNS.addService("http", "tcp", 80);
 }
 
 void printIP() {
@@ -52,7 +44,7 @@ void printIP() {
       Serial.println(WiFi.SSID());
       Serial.print("IP address:\t");
       Serial.println(WiFi.localIP());
-      startMDNS();
+      MDNS.notifyAPChange();
       break;
     case WL_NO_SSID_AVAIL:
       Serial.println("Error: No SSID available");
@@ -75,9 +67,6 @@ void printIP() {
 void printStations() {
   static int prevNumber = 0;
   if (WiFi.softAPgetStationNum() != prevNumber) {
-    if (WiFi.softAPgetStationNum() > 0) {
-      startMDNS();
-    }
     prevNumber = WiFi.softAPgetStationNum();
     Serial.print(prevNumber);
     Serial.println(" station(s) connected");
